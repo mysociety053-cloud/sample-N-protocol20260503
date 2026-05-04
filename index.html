@@ -12,239 +12,100 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
     }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .pulse-ring { animation: pulse-ring 2s infinite; }
+    @keyframes slide-up {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .slide-up { animation: slide-up 0.3s ease-out; }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react">
-    const { useState } = React;
+    const { useState, useEffect } = React;
 
-    // 간단한 SVG 아이콘 컴포넌트들
     const Icon = ({ children, className = "w-4 h-4" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         {children}
       </svg>
     );
 
-    const ArrowRight = ({ className }) => (
-      <Icon className={className}>
-        <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-      </Icon>
-    );
-
-    const ArrowLeft = ({ className }) => (
-      <Icon className={className}>
-        <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
-      </Icon>
-    );
-
-    const Sprout = ({ className }) => (
-      <Icon className={className}>
-        <path d="M7 20h10" />
-        <path d="M10 20c5.5-2.5.8-6.4 3-10" />
-        <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
-        <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
-      </Icon>
-    );
-
-    const Sparkles = ({ className }) => (
-      <Icon className={className}>
-        <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-      </Icon>
-    );
-
-    const MessageCircle = ({ className }) => (
-      <Icon className={className}>
-        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
-      </Icon>
-    );
-
-    const BookOpen = ({ className }) => (
-      <Icon className={className}>
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-      </Icon>
-    );
-
-    const Hand = ({ className }) => (
-      <Icon className={className}>
-        <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
-        <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
-        <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
-        <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
-      </Icon>
-    );
-
-    const Plus = ({ className }) => (
-      <Icon className={className}>
-        <path d="M5 12h14" /><path d="M12 5v14" />
-      </Icon>
-    );
-
-    const Minus = ({ className }) => (
-      <Icon className={className}>
-        <path d="M5 12h14" />
-      </Icon>
-    );
+    const ArrowRight = ({ className }) => (<Icon className={className}><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></Icon>);
+    const ArrowLeft = ({ className }) => (<Icon className={className}><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></Icon>);
+    const Sprout = ({ className }) => (<Icon className={className}><path d="M7 20h10" /><path d="M10 20c5.5-2.5.8-6.4 3-10" /><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" /><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" /></Icon>);
+    const Sparkles = ({ className }) => (<Icon className={className}><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /></Icon>);
+    const MessageCircle = ({ className }) => (<Icon className={className}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" /></Icon>);
+    const BookOpen = ({ className }) => (<Icon className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></Icon>);
+    const Hand = ({ className }) => (<Icon className={className}><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" /><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" /><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></Icon>);
+    const Plus = ({ className }) => (<Icon className={className}><path d="M5 12h14" /><path d="M12 5v14" /></Icon>);
+    const Minus = ({ className }) => (<Icon className={className}><path d="M5 12h14" /></Icon>);
+    const Bell = ({ className }) => (<Icon className={className}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></Icon>);
+    const X = ({ className }) => (<Icon className={className}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></Icon>);
+    const Check = ({ className }) => (<Icon className={className}><path d="M20 6 9 17l-5-5" /></Icon>);
+    const HelpCircle = ({ className }) => (<Icon className={className}><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></Icon>);
 
     function NProtocol() {
       const [view, setView] = useState('home');
       const [currentLesson, setCurrentLesson] = useState(null);
+      const [showCallModal, setShowCallModal] = useState(false);
+      const [callStatus, setCallStatus] = useState(null);
 
       const prerequisiteData = {
         title: "분수 단원을 시작하기 전에",
         subtitle: "이 3가지만 알면 충분히 따라갈 수 있어요",
         concepts: [
-          {
-            id: 1,
-            name: "똑같이 나누기",
-            from: "3학년 1학기",
-            description: "분수는 '똑같이 나눈다'는 생각에서 시작해요. 사과 한 개를 두 사람이 똑같이 나눠 먹으려면 어떻게 해야 할까요?",
-            keyPoint: "똑같이 = 모양과 크기가 같게",
-            manipulative: 'equal-share'
-          },
-          {
-            id: 2,
-            name: "곱셈구구",
-            from: "2학년",
-            description: "분수의 크기를 비교하거나 표기할 때 곱셈구구를 알면 훨씬 편해요.",
-            keyPoint: "2단, 3단, 4단, 5단은 자동으로 떠올릴 수 있어야 해요",
-            manipulative: null
-          },
-          {
-            id: 3,
-            name: "전체와 부분",
-            from: "2학년",
-            description: "한 묶음 전체에서 그 일부를 보는 사고가 분수의 핵심이에요.",
-            keyPoint: "전체를 보고, 그 안에서 부분을 찾을 수 있어야 해요",
-            manipulative: null
-          }
+          { id: 1, name: "똑같이 나누기", from: "3학년 1학기", description: "분수는 '똑같이 나눈다'는 생각에서 시작해요. 사과 한 개를 두 사람이 똑같이 나눠 먹으려면 어떻게 해야 할까요?", keyPoint: "똑같이 = 모양과 크기가 같게", manipulative: 'equal-share' },
+          { id: 2, name: "곱셈구구", from: "2학년", description: "분수의 크기를 비교하거나 표기할 때 곱셈구구를 알면 훨씬 편해요.", keyPoint: "2단, 3단, 4단, 5단은 자동으로 떠올릴 수 있어야 해요", manipulative: null },
+          { id: 3, name: "전체와 부분", from: "2학년", description: "한 묶음 전체에서 그 일부를 보는 사고가 분수의 핵심이에요.", keyPoint: "전체를 보고, 그 안에서 부분을 찾을 수 있어야 해요", manipulative: null }
         ]
       };
 
       const lessons = [
-        {
-          id: 'intro',
-          number: '도입',
-          title: '단원 도입',
-          coreLearning: "왜 분수가 필요할까?",
-          keyConcepts: [
-            "1보다 작은 수를 어떻게 나타낼까?",
-            "한 개를 여럿이 나눠 가지면 어떻게 표현할까?",
-            "분수는 우리 생활 속에서 어디에 쓰일까?"
-          ],
-          mustKnow: "분수는 '나눔'을 수로 나타낸 것이에요. 피자 한 판을 4명이 똑같이 나눠 먹을 때 한 사람이 먹는 양을 어떻게 표현할까요? 이런 상황에서 분수가 필요해요.",
-          manipulative: 'pizza',
-          prerequisite: ["똑같이 나누기"]
-        },
-        {
-          id: 'lesson1',
-          number: '1차시',
-          title: '전체를 똑같이 나누고 분수로 나타내요',
-          coreLearning: "전체를 똑같이 나누어 분수로 표현하기",
-          keyConcepts: [
-            "전체를 똑같이 나눈 조각의 수 = 분모",
-            "그 중 색칠한 조각의 수 = 분자",
-            "분수 표기법: 분자/분모 (분모 위에 분자)"
-          ],
-          mustKnow: "분수는 두 부분으로 이루어져 있어요. 아래쪽 수(분모)는 '전체를 몇 조각으로 나눴는지', 위쪽 수(분자)는 '그 중 몇 조각을 골랐는지'를 나타내요.",
-          manipulative: 'fraction-builder',
-          prerequisite: ["똑같이 나누기"]
-        },
-        {
-          id: 'lesson2',
-          number: '2차시',
-          title: '전체의 분수만큼은 얼마인지 알아봐요',
-          coreLearning: "전체에서 분수만큼의 양 구하기",
-          keyConcepts: [
-            "전체를 똑같이 나누고 그 중 일부의 양을 구하기",
-            "12개의 1/3 = 12를 3등분한 것 중 1묶음 = 4개",
-            "전체 → 부분으로 가는 사고"
-          ],
-          mustKnow: "사탕 12개의 1/3은 몇 개일까요? 12개를 3묶음으로 똑같이 나누면 한 묶음에 4개씩이에요. 그 중 한 묶음이니까 4개.",
-          manipulative: 'candy-group',
-          prerequisite: ["곱셈구구", "똑같이 나누기"]
-        },
-        {
-          id: 'lesson3',
-          number: '3차시',
-          title: '부분은 전체의 얼마인지 알아봐요',
-          coreLearning: "부분을 보고 전체의 분수로 표현하기",
-          keyConcepts: [
-            "주어진 부분이 전체의 몇 분의 몇인지 알아보기",
-            "2차시와 반대 방향의 사고",
-            "부분 → 분수로 가는 사고"
-          ],
-          mustKnow: "사탕 4개는 12개의 얼마일까요? 12개를 4개씩 묶으면 3묶음이 돼요. 그 중 1묶음이니까 1/3.",
-          manipulative: 'reverse-fraction',
-          prerequisite: ["전체와 부분", "곱셈구구"]
-        },
-        {
-          id: 'lesson4',
-          number: '4차시',
-          title: '여러 가지 분수를 알아봐요 (1)',
-          coreLearning: "진분수와 가분수 구별하기",
-          keyConcepts: [
-            "진분수: 분자가 분모보다 작은 분수 (1보다 작음)",
-            "가분수: 분자가 분모보다 같거나 큰 분수 (1보다 같거나 큼)",
-            "분자와 분모의 크기 비교가 핵심"
-          ],
-          mustKnow: "진분수는 1보다 작은 분수예요(예: 2/3). 가분수는 1과 같거나 큰 분수예요(예: 5/3, 4/4).",
-          manipulative: 'proper-improper',
-          prerequisite: []
-        },
-        {
-          id: 'lesson5',
-          number: '5차시',
-          title: '여러 가지 분수를 알아봐요 (2)',
-          coreLearning: "대분수의 의미와 표현 방법",
-          keyConcepts: [
-            "대분수: 자연수 + 진분수 형태 (예: 1과 2/3)",
-            "1과 2/3 = 1 + 2/3",
-            "가분수와 다른 표현 방식"
-          ],
-          mustKnow: "1과 2/3 같은 형태가 대분수예요. 자연수(1)와 진분수(2/3)가 함께 있는 분수죠.",
-          manipulative: 'mixed-number',
-          prerequisite: []
-        },
-        {
-          id: 'lesson6',
-          number: '6차시',
-          title: '대분수와 가분수를 바꾸어 나타내요',
-          coreLearning: "대분수 ↔ 가분수 변환하기",
-          keyConcepts: [
-            "대분수를 가분수로: 자연수 × 분모 + 분자",
-            "가분수를 대분수로: 분자를 분모로 나누어 몫과 나머지로",
-            "같은 양의 두 가지 표현"
-          ],
-          mustKnow: "1과 2/3을 가분수로 바꾸려면? 1 = 3/3이니까 3/3 + 2/3 = 5/3. 표현 방식만 바뀔 뿐 양은 똑같아요.",
-          manipulative: 'convert',
-          prerequisite: ["곱셈구구"]
-        },
-        {
-          id: 'lesson7',
-          number: '7차시',
-          title: '분수의 크기를 비교해요',
-          coreLearning: "분모가 같은 분수의 크기 비교",
-          keyConcepts: [
-            "분모가 같으면 분자가 큰 쪽이 더 큰 분수",
-            "분모가 다른 단위분수는 분모가 작은 쪽이 더 큰 분수",
-            "시각적으로 비교하는 습관"
-          ],
-          mustKnow: "분모가 같은 분수끼리는 분자가 크면 더 큰 분수예요(3/5 > 2/5). 분모가 다른 단위분수끼리는 분모가 작은 쪽이 더 커요(1/2 > 1/3).",
-          manipulative: 'compare',
-          prerequisite: []
-        }
+        { id: 'intro', number: '도입', title: '단원 도입', coreLearning: "왜 분수가 필요할까?", keyConcepts: ["1보다 작은 수를 어떻게 나타낼까?", "한 개를 여럿이 나눠 가지면 어떻게 표현할까?", "분수는 우리 생활 속에서 어디에 쓰일까?"], mustKnow: "분수는 '나눔'을 수로 나타낸 것이에요. 피자 한 판을 4명이 똑같이 나눠 먹을 때 한 사람이 먹는 양을 어떻게 표현할까요? 이런 상황에서 분수가 필요해요.", manipulative: 'pizza', prerequisite: ["똑같이 나누기"] },
+        { id: 'lesson1', number: '1차시', title: '전체를 똑같이 나누고 분수로 나타내요', coreLearning: "전체를 똑같이 나누어 분수로 표현하기", keyConcepts: ["전체를 똑같이 나눈 조각의 수 = 분모", "그 중 색칠한 조각의 수 = 분자", "분수 표기법: 분자/분모 (분모 위에 분자)"], mustKnow: "분수는 두 부분으로 이루어져 있어요. 아래쪽 수(분모)는 '전체를 몇 조각으로 나눴는지', 위쪽 수(분자)는 '그 중 몇 조각을 골랐는지'를 나타내요.", manipulative: 'fraction-builder', prerequisite: ["똑같이 나누기"] },
+        { id: 'lesson2', number: '2차시', title: '전체의 분수만큼은 얼마인지 알아봐요', coreLearning: "전체에서 분수만큼의 양 구하기", keyConcepts: ["전체를 똑같이 나누고 그 중 일부의 양을 구하기", "12개의 1/3 = 12를 3등분한 것 중 1묶음 = 4개", "전체 → 부분으로 가는 사고"], mustKnow: "사탕 12개의 1/3은 몇 개일까요? 12개를 3묶음으로 똑같이 나누면 한 묶음에 4개씩이에요. 그 중 한 묶음이니까 4개.", manipulative: 'candy-group', prerequisite: ["곱셈구구", "똑같이 나누기"] },
+        { id: 'lesson3', number: '3차시', title: '부분은 전체의 얼마인지 알아봐요', coreLearning: "부분을 보고 전체의 분수로 표현하기", keyConcepts: ["주어진 부분이 전체의 몇 분의 몇인지 알아보기", "2차시와 반대 방향의 사고", "부분 → 분수로 가는 사고"], mustKnow: "사탕 4개는 12개의 얼마일까요? 12개를 4개씩 묶으면 3묶음이 돼요. 그 중 1묶음이니까 1/3.", manipulative: 'reverse-fraction', prerequisite: ["전체와 부분", "곱셈구구"] },
+        { id: 'lesson4', number: '4차시', title: '여러 가지 분수를 알아봐요 (1)', coreLearning: "진분수와 가분수 구별하기", keyConcepts: ["진분수: 분자가 분모보다 작은 분수 (1보다 작음)", "가분수: 분자가 분모보다 같거나 큰 분수 (1보다 같거나 큼)", "분자와 분모의 크기 비교가 핵심"], mustKnow: "진분수는 1보다 작은 분수예요(예: 2/3). 가분수는 1과 같거나 큰 분수예요(예: 5/3, 4/4).", manipulative: 'proper-improper', prerequisite: [] },
+        { id: 'lesson5', number: '5차시', title: '여러 가지 분수를 알아봐요 (2)', coreLearning: "대분수의 의미와 표현 방법", keyConcepts: ["대분수: 자연수 + 진분수 형태 (예: 1과 2/3)", "1과 2/3 = 1 + 2/3", "가분수와 다른 표현 방식"], mustKnow: "1과 2/3 같은 형태가 대분수예요. 자연수(1)와 진분수(2/3)가 함께 있는 분수죠.", manipulative: 'mixed-number', prerequisite: [] },
+        { id: 'lesson6', number: '6차시', title: '대분수와 가분수를 바꾸어 나타내요', coreLearning: "대분수 ↔ 가분수 변환하기", keyConcepts: ["대분수를 가분수로: 자연수 × 분모 + 분자", "가분수를 대분수로: 분자를 분모로 나누어 몫과 나머지로", "같은 양의 두 가지 표현"], mustKnow: "1과 2/3을 가분수로 바꾸려면? 1 = 3/3이니까 3/3 + 2/3 = 5/3. 표현 방식만 바뀔 뿐 양은 똑같아요.", manipulative: 'convert', prerequisite: ["곱셈구구"] },
+        { id: 'lesson7', number: '7차시', title: '분수의 크기를 비교해요', coreLearning: "분모가 같은 분수의 크기 비교", keyConcepts: ["분모가 같으면 분자가 큰 쪽이 더 큰 분수", "분모가 다른 단위분수는 분모가 작은 쪽이 더 큰 분수", "시각적으로 비교하는 습관"], mustKnow: "분모가 같은 분수끼리는 분자가 크면 더 큰 분수예요(3/5 > 2/5). 분모가 다른 단위분수끼리는 분모가 작은 쪽이 더 커요(1/2 > 1/3).", manipulative: 'compare', prerequisite: [] }
       ];
 
-      // ===== 디지털 교구들 =====
+      const callTypes = [
+        { id: 'concept', icon: '🤔', label: '개념이 이해가 안 돼요', description: '무엇을 배우고 있는지 잘 모르겠어요' },
+        { id: 'tool', icon: '🛠', label: '도구 사용법을 모르겠어요', description: '디지털 교구를 어떻게 만져야 할지 모르겠어요' },
+        { id: 'reading', icon: '📖', label: '설명을 읽어도 모르겠어요', description: '글로 된 설명이 이해가 안 돼요' },
+        { id: 'direct', icon: '✋', label: '선생님께 직접 물어보고 싶어요', description: '위에 없는 다른 이유로 도움이 필요해요' }
+      ];
 
+      // 호출 모달 처리
+      const handleCall = (typeId) => {
+        const type = callTypes.find(t => t.id === typeId);
+        const location = currentLesson ? `${currentLesson.number} - ${currentLesson.title}` : '단원 시작 전';
+        setCallStatus({
+          type: type,
+          location: location,
+          time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+        });
+        // 5초 후 자동 닫기 (시연용)
+        setTimeout(() => {
+          setCallStatus(null);
+          setShowCallModal(false);
+        }, 5000);
+      };
+
+      // ===== 디지털 교구들 =====
       const FractionBuilder = () => {
         const [denominator, setDenominator] = useState(4);
         const [numerator, setNumerator] = useState(0);
         const slices = Array.from({ length: denominator }, (_, i) => i);
-
         return (
           <div className="space-y-5">
             <div className="bg-white rounded-xl p-6 flex flex-col items-center">
@@ -253,23 +114,11 @@
                   const angle = (2 * Math.PI) / denominator;
                   const startAngle = i * angle - Math.PI / 2;
                   const endAngle = (i + 1) * angle - Math.PI / 2;
-                  const x1 = Math.cos(startAngle) * 100;
-                  const y1 = Math.sin(startAngle) * 100;
-                  const x2 = Math.cos(endAngle) * 100;
-                  const y2 = Math.sin(endAngle) * 100;
+                  const x1 = Math.cos(startAngle) * 100, y1 = Math.sin(startAngle) * 100;
+                  const x2 = Math.cos(endAngle) * 100, y2 = Math.sin(endAngle) * 100;
                   const largeArc = angle > Math.PI ? 1 : 0;
                   const isFilled = i < numerator;
-                  return (
-                    <path
-                      key={i}
-                      d={`M 0 0 L ${x1} ${y1} A 100 100 0 ${largeArc} 1 ${x2} ${y2} Z`}
-                      fill={isFilled ? '#10b981' : '#f1f5f9'}
-                      stroke="#475569"
-                      strokeWidth="2"
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setNumerator(isFilled ? i : i + 1)}
-                    />
-                  );
+                  return (<path key={i} d={`M 0 0 L ${x1} ${y1} A 100 100 0 ${largeArc} 1 ${x2} ${y2} Z`} fill={isFilled ? '#10b981' : '#f1f5f9'} stroke="#475569" strokeWidth="2" className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setNumerator(isFilled ? i : i + 1)} />);
                 })}
               </svg>
               <div className="mt-4 flex items-center gap-3">
@@ -279,12 +128,9 @@
                   <div className="text-3xl font-bold text-slate-900 leading-tight">{denominator}</div>
                 </div>
                 <div className="text-slate-500">=</div>
-                <div className="text-slate-700">
-                  {denominator}조각 중 <span className="font-bold text-emerald-600">{numerator}조각</span>
-                </div>
+                <div className="text-slate-700">{denominator}조각 중 <span className="font-bold text-emerald-600">{numerator}조각</span></div>
               </div>
             </div>
-
             <div className="bg-white rounded-xl p-4 space-y-3">
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">전체를 몇 조각으로 나눌까? (분모)</label>
@@ -309,9 +155,7 @@
                 <circle cx="0" cy="0" r="100" fill="#fbbf24" stroke="#92400e" strokeWidth="3" />
                 {Array.from({ length: people }, (_, i) => {
                   const angle = (2 * Math.PI * i) / people - Math.PI / 2;
-                  return (
-                    <line key={i} x1="0" y1="0" x2={Math.cos(angle) * 100} y2={Math.sin(angle) * 100} stroke="#92400e" strokeWidth="2" />
-                  );
+                  return (<line key={i} x1="0" y1="0" x2={Math.cos(angle) * 100} y2={Math.sin(angle) * 100} stroke="#92400e" strokeWidth="2" />);
                 })}
                 {Array.from({ length: people }, (_, i) => {
                   const angle = (2 * Math.PI * (i + 0.5)) / people - Math.PI / 2;
@@ -371,34 +215,20 @@
         const groupSize = Math.floor(total / denominator);
         const result = groupSize * numerator;
         const isValid = total % denominator === 0;
-
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-5">
               <p className="text-xs font-semibold text-slate-600 mb-3">사탕 {total}개의 {numerator}/{denominator}는?</p>
-              {isValid ? (
-                <>
-                  <div className="flex flex-wrap gap-1.5 justify-center mb-3">
-                    {Array.from({ length: total }, (_, i) => {
-                      const groupIdx = Math.floor(i / groupSize);
-                      const isInResult = groupIdx < numerator;
-                      return (
-                        <div key={i} className={`w-7 h-7 rounded-full ${isInResult ? 'bg-emerald-500' : 'bg-slate-200'} ${(i + 1) % groupSize === 0 ? 'mr-2' : ''} transition-colors`} />
-                      );
-                    })}
-                  </div>
-                  <p className="text-center text-sm text-slate-700">
-                    {total} ÷ {denominator} = {groupSize}개씩 묶음<br />
-                    <span className="font-bold text-slate-900">{numerator}묶음 = </span>
-                    <span className="font-bold text-emerald-600 text-lg">{result}개</span>
-                  </p>
-                </>
-              ) : (
-                <p className="text-center text-sm text-amber-700 py-4">
-                  {total}을 {denominator}로 나눌 수 없어요.<br />
-                  다른 수를 골라보세요.
-                </p>
-              )}
+              {isValid ? (<>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-3">
+                  {Array.from({ length: total }, (_, i) => {
+                    const groupIdx = Math.floor(i / groupSize);
+                    const isInResult = groupIdx < numerator;
+                    return (<div key={i} className={`w-7 h-7 rounded-full ${isInResult ? 'bg-emerald-500' : 'bg-slate-200'} ${(i + 1) % groupSize === 0 ? 'mr-2' : ''} transition-colors`} />);
+                  })}
+                </div>
+                <p className="text-center text-sm text-slate-700">{total} ÷ {denominator} = {groupSize}개씩 묶음<br /><span className="font-bold text-slate-900">{numerator}묶음 = </span><span className="font-bold text-emerald-600 text-lg">{result}개</span></p>
+              </>) : (<p className="text-center text-sm text-amber-700 py-4">{total}을 {denominator}로 나눌 수 없어요.<br />다른 수를 골라보세요.</p>)}
             </div>
             <div className="bg-white rounded-xl p-4 space-y-3">
               <div>
@@ -436,34 +266,20 @@
         const [selected, setSelected] = useState(1);
         const groups = Math.floor(total / groupSize);
         const isValid = total % groupSize === 0;
-
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-5">
               <p className="text-xs font-semibold text-slate-600 mb-3">{total}개를 {groupSize}개씩 묶으면?</p>
-              {isValid ? (
-                <>
-                  <div className="flex flex-wrap gap-1.5 justify-center mb-3">
-                    {Array.from({ length: total }, (_, i) => {
-                      const groupIdx = Math.floor(i / groupSize);
-                      const isSelected = groupIdx < selected;
-                      return (
-                        <div key={i} className={`w-7 h-7 rounded-full ${isSelected ? 'bg-emerald-500' : 'bg-slate-200'} ${(i + 1) % groupSize === 0 ? 'mr-2' : ''} transition-colors cursor-pointer`}
-                             onClick={() => setSelected(groupIdx + 1)} />
-                      );
-                    })}
-                  </div>
-                  <p className="text-center text-sm text-slate-700">
-                    {groups}묶음 중 <span className="font-bold text-emerald-600">{selected}묶음</span> 선택<br />
-                    <span className="font-bold text-slate-900">전체의 </span>
-                    <span className="font-bold text-emerald-600 text-lg">{selected}/{groups}</span>
-                  </p>
-                </>
-              ) : (
-                <p className="text-center text-sm text-amber-700 py-4">
-                  {total}을 {groupSize}로 나눌 수 없어요.
-                </p>
-              )}
+              {isValid ? (<>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-3">
+                  {Array.from({ length: total }, (_, i) => {
+                    const groupIdx = Math.floor(i / groupSize);
+                    const isSelected = groupIdx < selected;
+                    return (<div key={i} className={`w-7 h-7 rounded-full ${isSelected ? 'bg-emerald-500' : 'bg-slate-200'} ${(i + 1) % groupSize === 0 ? 'mr-2' : ''} transition-colors cursor-pointer`} onClick={() => setSelected(groupIdx + 1)} />);
+                  })}
+                </div>
+                <p className="text-center text-sm text-slate-700">{groups}묶음 중 <span className="font-bold text-emerald-600">{selected}묶음</span> 선택<br /><span className="font-bold text-slate-900">전체의 </span><span className="font-bold text-emerald-600 text-lg">{selected}/{groups}</span></p>
+              </>) : (<p className="text-center text-sm text-amber-700 py-4">{total}을 {groupSize}로 나눌 수 없어요.</p>)}
             </div>
             <div className="bg-white rounded-xl p-4 space-y-3">
               <div>
@@ -495,22 +311,14 @@
         const isEqual = numerator === denominator;
         const wholes = Math.floor(numerator / denominator);
         const remainder = numerator % denominator;
-
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-5">
               <div className="space-y-2 mb-4">
                 {Array.from({ length: Math.max(1, wholes + (remainder > 0 ? 1 : 0)) }, (_, rowIdx) => {
                   const isLastRow = rowIdx === wholes && remainder > 0;
-                  const sliceCount = denominator;
                   const filledInRow = isLastRow ? remainder : (rowIdx < wholes ? denominator : 0);
-                  return (
-                    <div key={rowIdx} className="flex gap-0.5">
-                      {Array.from({ length: sliceCount }, (_, i) => (
-                        <div key={i} className={`flex-1 h-8 border border-slate-400 rounded ${i < filledInRow ? 'bg-emerald-500' : 'bg-slate-100'}`} />
-                      ))}
-                    </div>
-                  );
+                  return (<div key={rowIdx} className="flex gap-0.5">{Array.from({ length: denominator }, (_, i) => (<div key={i} className={`flex-1 h-8 border border-slate-400 rounded ${i < filledInRow ? 'bg-emerald-500' : 'bg-slate-100'}`} />))}</div>);
                 })}
               </div>
               <div className="text-center mb-3">
@@ -521,9 +329,7 @@
                 </div>
               </div>
               <div className={`text-center py-2 px-4 rounded-lg ${isProper ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>
-                <p className="text-sm font-semibold">
-                  {isProper ? '진분수 (1보다 작음)' : isEqual ? '가분수 (1과 같음)' : '가분수 (1보다 큼)'}
-                </p>
+                <p className="text-sm font-semibold">{isProper ? '진분수 (1보다 작음)' : isEqual ? '가분수 (1과 같음)' : '가분수 (1보다 큼)'}</p>
               </div>
             </div>
             <div className="bg-white rounded-xl p-4 space-y-3">
@@ -552,23 +358,12 @@
         const [whole, setWhole] = useState(1);
         const [denominator, setDenominator] = useState(3);
         const [numerator, setNumerator] = useState(2);
-
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-5">
               <div className="space-y-2 mb-4">
-                {Array.from({ length: whole }, (_, i) => (
-                  <div key={`w-${i}`} className="flex gap-0.5">
-                    {Array.from({ length: denominator }, (_, j) => (
-                      <div key={j} className="flex-1 h-8 border border-slate-400 rounded bg-emerald-500" />
-                    ))}
-                  </div>
-                ))}
-                <div className="flex gap-0.5">
-                  {Array.from({ length: denominator }, (_, j) => (
-                    <div key={j} className={`flex-1 h-8 border border-slate-400 rounded ${j < numerator ? 'bg-amber-500' : 'bg-slate-100'}`} />
-                  ))}
-                </div>
+                {Array.from({ length: whole }, (_, i) => (<div key={`w-${i}`} className="flex gap-0.5">{Array.from({ length: denominator }, (_, j) => (<div key={j} className="flex-1 h-8 border border-slate-400 rounded bg-emerald-500" />))}</div>))}
+                <div className="flex gap-0.5">{Array.from({ length: denominator }, (_, j) => (<div key={j} className={`flex-1 h-8 border border-slate-400 rounded ${j < numerator ? 'bg-amber-500' : 'bg-slate-100'}`} />))}</div>
               </div>
               <div className="text-center mb-3 flex items-center justify-center gap-2">
                 <span className="text-2xl font-bold text-emerald-600">{whole}</span>
@@ -581,9 +376,7 @@
               </div>
               <div className="text-center bg-slate-50 py-2 px-4 rounded-lg">
                 <p className="text-xs text-slate-500 mb-0.5">자연수 + 진분수</p>
-                <p className="text-sm font-semibold text-slate-700">
-                  <span className="text-emerald-600">{whole}</span>과 <span className="text-amber-600">{numerator}/{denominator}</span> = 대분수
-                </p>
+                <p className="text-sm font-semibold text-slate-700"><span className="text-emerald-600">{whole}</span>과 <span className="text-amber-600">{numerator}/{denominator}</span> = 대분수</p>
               </div>
             </div>
             <div className="bg-white rounded-xl p-4 space-y-3">
@@ -621,26 +414,13 @@
         const [improperNum, setImproperNum] = useState(5);
         const whole = Math.floor(improperNum / denominator);
         const remainder = improperNum % denominator;
-
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-5">
               <p className="text-xs font-semibold text-slate-600 mb-3">가분수 → 대분수 변환</p>
               <div className="space-y-2 mb-4">
-                {Array.from({ length: whole }, (_, i) => (
-                  <div key={`w-${i}`} className="flex gap-0.5">
-                    {Array.from({ length: denominator }, (_, j) => (
-                      <div key={j} className="flex-1 h-7 border border-slate-400 rounded bg-emerald-500" />
-                    ))}
-                  </div>
-                ))}
-                {remainder > 0 && (
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: denominator }, (_, j) => (
-                      <div key={j} className={`flex-1 h-7 border border-slate-400 rounded ${j < remainder ? 'bg-amber-500' : 'bg-slate-100'}`} />
-                    ))}
-                  </div>
-                )}
+                {Array.from({ length: whole }, (_, i) => (<div key={`w-${i}`} className="flex gap-0.5">{Array.from({ length: denominator }, (_, j) => (<div key={j} className="flex-1 h-7 border border-slate-400 rounded bg-emerald-500" />))}</div>))}
+                {remainder > 0 && (<div className="flex gap-0.5">{Array.from({ length: denominator }, (_, j) => (<div key={j} className={`flex-1 h-7 border border-slate-400 rounded ${j < remainder ? 'bg-amber-500' : 'bg-slate-100'}`} />))}</div>)}
               </div>
               <div className="bg-slate-900 text-white rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
@@ -656,16 +436,7 @@
                   <span className="text-xs text-slate-400">대분수</span>
                   <div className="flex items-center gap-1">
                     {whole > 0 && <span className="font-bold text-lg">{whole}</span>}
-                    {remainder > 0 && (
-                      <>
-                        {whole > 0 && <span className="text-xs text-slate-400">과</span>}
-                        <div className="inline-flex flex-col items-center">
-                          <span className="font-bold text-lg">{remainder}</span>
-                          <div className="h-0.5 w-5 bg-white"></div>
-                          <span className="font-bold text-lg">{denominator}</span>
-                        </div>
-                      </>
-                    )}
+                    {remainder > 0 && (<>{whole > 0 && <span className="text-xs text-slate-400">과</span>}<div className="inline-flex flex-col items-center"><span className="font-bold text-lg">{remainder}</span><div className="h-0.5 w-5 bg-white"></div><span className="font-bold text-lg">{denominator}</span></div></>)}
                     {remainder === 0 && <span className="text-xs text-slate-400">(나머지 없음)</span>}
                   </div>
                 </div>
@@ -698,29 +469,18 @@
         const [d1, setD1] = useState(5);
         const [n2, setN2] = useState(2);
         const [d2, setD2] = useState(5);
-        const v1 = n1 / d1;
-        const v2 = n2 / d2;
-        const sign = v1 > v2 ? '>' : v1 < v2 ? '<' : '=';
-
+        const sign = (n1 / d1) > (n2 / d2) ? '>' : (n1 / d1) < (n2 / d2) ? '<' : '=';
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-5">
               <div className="space-y-4 mb-4">
                 <div>
                   <p className="text-xs text-slate-600 mb-1.5">첫 번째 분수: {n1}/{d1}</p>
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: d1 }, (_, i) => (
-                      <div key={i} className={`flex-1 h-8 border border-slate-400 rounded ${i < n1 ? 'bg-emerald-500' : 'bg-slate-100'}`} />
-                    ))}
-                  </div>
+                  <div className="flex gap-0.5">{Array.from({ length: d1 }, (_, i) => (<div key={i} className={`flex-1 h-8 border border-slate-400 rounded ${i < n1 ? 'bg-emerald-500' : 'bg-slate-100'}`} />))}</div>
                 </div>
                 <div>
                   <p className="text-xs text-slate-600 mb-1.5">두 번째 분수: {n2}/{d2}</p>
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: d2 }, (_, i) => (
-                      <div key={i} className={`flex-1 h-8 border border-slate-400 rounded ${i < n2 ? 'bg-blue-500' : 'bg-slate-100'}`} />
-                    ))}
-                  </div>
+                  <div className="flex gap-0.5">{Array.from({ length: d2 }, (_, i) => (<div key={i} className={`flex-1 h-8 border border-slate-400 rounded ${i < n2 ? 'bg-blue-500' : 'bg-slate-100'}`} />))}</div>
                 </div>
               </div>
               <div className="bg-slate-900 text-white rounded-lg p-4 flex items-center justify-center gap-4">
@@ -790,6 +550,96 @@
         }
       };
 
+      // ===== 호출 모달 =====
+      const renderCallModal = () => {
+        if (!showCallModal) return null;
+        if (callStatus) {
+          return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 slide-up">
+                <div className="text-center mb-4">
+                  <div className="w-16 h-16 bg-red-500 rounded-full mx-auto mb-3 flex items-center justify-center pulse-ring">
+                    <Bell className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1">선생님께 호출 요청을 보냈어요</h3>
+                  <p className="text-sm text-slate-500">잠시만 기다려주세요</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4 space-y-2 mb-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">{callStatus.type.icon}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-900">{callStatus.type.label}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{callStatus.type.description}</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-200 pt-2 mt-2 space-y-1 text-xs">
+                    <div className="flex justify-between"><span className="text-slate-500">위치</span><span className="font-medium text-slate-700">{callStatus.location}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">시간</span><span className="font-medium text-slate-700">{callStatus.time}</span></div>
+                  </div>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-center">
+                  <p className="text-xs font-semibold text-emerald-700 mb-0.5">잘했어요!</p>
+                  <p className="text-xs text-emerald-600">막힌 곳을 알아차리는 것이 진짜 공부예요</p>
+                </div>
+                <p className="text-center text-xs text-slate-400 mt-3">5초 후 자동으로 닫혀요</p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto slide-up">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-1">선생님 호출하기</h3>
+                    <p className="text-sm text-slate-500">어디가 어려운지 알려주세요</p>
+                  </div>
+                  <button onClick={() => setShowCallModal(false)} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center flex-shrink-0">
+                    <X className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {callTypes.map((type) => (
+                    <button key={type.id} onClick={() => handleCall(type.id)} className="w-full text-left bg-white border border-slate-200 hover:border-slate-900 hover:shadow-md rounded-xl p-4 transition-all group">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl flex-shrink-0">{type.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-slate-900 mb-0.5">{type.label}</h4>
+                          <p className="text-xs text-slate-500">{type.description}</p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 bg-amber-50 border border-amber-100 rounded-lg p-3">
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    <span className="font-semibold">호출은 부끄러운 게 아니에요!</span><br />
+                    내가 어디서 막혔는지 알아차리는 것이 진짜 공부예요.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // ===== 호출 버튼 (플로팅) =====
+      const renderCallButton = () => {
+        if (view === 'home') return null;
+        return (
+          <button
+            onClick={() => setShowCallModal(true)}
+            className="fixed bottom-6 right-6 w-14 h-14 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg shadow-red-200 flex items-center justify-center z-40 transition-all hover:scale-105"
+            aria-label="선생님 호출"
+          >
+            <HelpCircle className="w-7 h-7" />
+          </button>
+        );
+      };
+
+      // ===== 화면들 =====
       const renderHome = () => (
         <div className="space-y-10">
           <div>
@@ -801,10 +651,7 @@
             <p className="text-slate-500">3학년 2학기 · 5단원</p>
           </div>
 
-          <button
-            onClick={() => setView('prerequisite')}
-            className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 p-6 text-left hover:shadow-lg hover:shadow-emerald-100/50 transition-all duration-300"
-          >
+          <button onClick={() => setView('prerequisite')} className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 p-6 text-left hover:shadow-lg hover:shadow-emerald-100/50 transition-all duration-300">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-md shadow-emerald-200">
                 <Sprout className="w-6 h-6" />
@@ -812,9 +659,7 @@
               <div className="flex-1">
                 <p className="text-xs font-semibold tracking-wider text-emerald-700 mb-1">단원 시작 전</p>
                 <h3 className="text-lg font-bold text-slate-900 mb-1.5">먼저 알아야 할 개념들</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  사전 진단에서 부족한 부분이 있다면 여기부터 시작하세요
-                </p>
+                <p className="text-sm text-slate-600 leading-relaxed">사전 진단에서 부족한 부분이 있다면 여기부터 시작하세요</p>
               </div>
               <ArrowRight className="w-5 h-5 text-emerald-600 mt-2 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -826,22 +671,12 @@
               <div className="h-px flex-1 bg-slate-200" />
               <span className="text-xs text-slate-400">{lessons.length}개 차시</span>
             </div>
-
             <div className="grid gap-2.5">
               {lessons.map((lesson) => (
-                <button
-                  key={lesson.id}
-                  onClick={() => {
-                    setCurrentLesson(lesson);
-                    setView('lesson');
-                  }}
-                  className="w-full group relative bg-white border border-slate-200 rounded-xl p-4 text-left hover:border-slate-900 hover:shadow-md transition-all duration-200"
-                >
+                <button key={lesson.id} onClick={() => { setCurrentLesson(lesson); setView('lesson'); }} className="w-full group relative bg-white border border-slate-200 rounded-xl p-4 text-left hover:border-slate-900 hover:shadow-md transition-all duration-200">
                   <div className="flex items-center gap-4">
                     <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-slate-100 group-hover:bg-slate-900 flex items-center justify-center transition-colors">
-                      <span className="text-xs font-bold text-slate-700 group-hover:text-white transition-colors">
-                        {lesson.number}
-                      </span>
+                      <span className="text-xs font-bold text-slate-700 group-hover:text-white transition-colors">{lesson.number}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-slate-900 mb-0.5 truncate">{lesson.title}</h4>
@@ -854,6 +689,27 @@
             </div>
           </div>
 
+          {/* 호출 기능 안내 */}
+          <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-red-50 border border-rose-100 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center text-white">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-900 mb-1 text-sm">막히면 선생님을 호출하세요</h4>
+                <p className="text-xs text-slate-600 leading-relaxed mb-2">
+                  학습 중에 화면 오른쪽 아래에 빨간 버튼이 있어요. 눌러서 어디가 어려운지 알려주면 선생님이 도와드려요.
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <span className="text-xs bg-white border border-rose-200 px-2 py-0.5 rounded-md text-slate-700">🤔 개념 모름</span>
+                  <span className="text-xs bg-white border border-rose-200 px-2 py-0.5 rounded-md text-slate-700">🛠 도구 사용법</span>
+                  <span className="text-xs bg-white border border-rose-200 px-2 py-0.5 rounded-md text-slate-700">📖 설명 어려움</span>
+                  <span className="text-xs bg-white border border-rose-200 px-2 py-0.5 rounded-md text-slate-700">✋ 직접 물어보기</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="pt-8 border-t border-slate-100">
             <p className="text-xs text-slate-400 text-center">능동초등학교 · N-Protocol 연구</p>
           </div>
@@ -862,10 +718,7 @@
 
       const renderPrerequisite = () => (
         <div className="space-y-6">
-          <button
-            onClick={() => setView('home')}
-            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors group"
-          >
+          <button onClick={() => setView('home')} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors group">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             단원 목록으로
           </button>
@@ -883,15 +736,11 @@
             {prerequisiteData.concepts.map((concept, idx) => (
               <div key={concept.id} className="bg-white border border-slate-200 rounded-2xl p-6">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 w-9 h-9 bg-slate-900 text-white rounded-lg flex items-center justify-center text-sm font-bold">
-                    {idx + 1}
-                  </div>
+                  <div className="flex-shrink-0 w-9 h-9 bg-slate-900 text-white rounded-lg flex items-center justify-center text-sm font-bold">{idx + 1}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <h3 className="text-lg font-bold text-slate-900">{concept.name}</h3>
-                      <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                        {concept.from}
-                      </span>
+                      <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">{concept.from}</span>
                     </div>
                     <p className="text-slate-700 leading-relaxed mb-3 text-sm">{concept.description}</p>
                     <div className="bg-amber-50 border-l-2 border-amber-400 px-4 py-3 rounded-r-lg">
@@ -922,13 +771,9 @@
 
       const renderLesson = () => {
         if (!currentLesson) return null;
-
         return (
           <div className="space-y-6">
-            <button
-              onClick={() => setView('home')}
-              className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors group"
-            >
+            <button onClick={() => setView('home')} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors group">
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
               단원 목록으로
             </button>
@@ -954,9 +799,7 @@
               <ul className="space-y-3">
                 {currentLesson.keyConcepts.map((concept, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-md bg-slate-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">
-                      {idx + 1}
-                    </span>
+                    <span className="flex-shrink-0 w-6 h-6 rounded-md bg-slate-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">{idx + 1}</span>
                     <span className="text-slate-800 leading-relaxed text-[15px]">{concept}</span>
                   </li>
                 ))}
@@ -977,30 +820,38 @@
                   <Hand className="w-4 h-4 text-emerald-400" />
                   <h3 className="text-sm font-semibold">직접 만져보며 익히기</h3>
                 </div>
-                <p className="text-sm text-slate-300 mb-5">
-                  아래 도구를 직접 조작하면서 개념을 체득해보세요
-                </p>
-                <div className="bg-slate-50 rounded-xl p-4">
-                  {renderManipulative(currentLesson.manipulative)}
-                </div>
+                <p className="text-sm text-slate-300 mb-5">아래 도구를 직접 조작하면서 개념을 체득해보세요</p>
+                <div className="bg-slate-50 rounded-xl p-4">{renderManipulative(currentLesson.manipulative)}</div>
               </div>
             )}
+
+            {/* 막혔을 때 호출 안내 */}
+            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center text-white">
+                  <HelpCircle className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-slate-900 mb-1 text-sm">막혔다면 선생님을 호출하세요</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                    교구를 두 번 이상 만져봐도, 설명을 두 번 읽어도 모르겠다면 화면 오른쪽 아래 빨간 버튼을 눌러주세요.
+                  </p>
+                  <button onClick={() => setShowCallModal(true)} className="inline-flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    선생님 호출하기
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {currentLesson.prerequisite && currentLesson.prerequisite.length > 0 && (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
                 <p className="text-xs font-semibold text-slate-600 mb-2">이 차시가 어렵다면</p>
                 <p className="text-sm text-slate-700 mb-3">아래 개념을 먼저 익히면 도움이 돼요</p>
                 <div className="flex flex-wrap gap-1.5 mb-3">
-                  {currentLesson.prerequisite.map((p, idx) => (
-                    <span key={idx} className="bg-white border border-slate-200 px-2.5 py-1 rounded-md text-xs font-medium text-slate-700">
-                      {p}
-                    </span>
-                  ))}
+                  {currentLesson.prerequisite.map((p, idx) => (<span key={idx} className="bg-white border border-slate-200 px-2.5 py-1 rounded-md text-xs font-medium text-slate-700">{p}</span>))}
                 </div>
-                <button
-                  onClick={() => setView('prerequisite')}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors"
-                >
+                <button onClick={() => setView('prerequisite')} className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors">
                   선수개념 보러가기
                   <ArrowRight className="w-3 h-3" />
                 </button>
@@ -1012,11 +863,13 @@
 
       return (
         <div className="min-h-screen bg-slate-50">
-          <div className="max-w-2xl mx-auto px-5 py-10 sm:py-14">
+          <div className="max-w-2xl mx-auto px-5 py-10 sm:py-14 pb-32">
             {view === 'home' && renderHome()}
             {view === 'prerequisite' && renderPrerequisite()}
             {view === 'lesson' && renderLesson()}
           </div>
+          {renderCallButton()}
+          {renderCallModal()}
         </div>
       );
     }
