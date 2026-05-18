@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif; }
@@ -22,7 +23,15 @@
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react">
-    const { useState, useEffect, useCallback } = React;
+    // ===========================================================
+    // ⚠️ 여기 두 줄만 본인 Supabase 정보로 바꾸세요
+    // ===========================================================
+ const SUPABASE_URL = 'https://quiobldufshndkfqfgvo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1aW9ibGR1ZnNobmRrZnFmZ3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjIwOTcsImV4cCI6MjA5NDY5ODA5N30.Pyuk6JoUZQ1HHXaWzns5u_ynmilJW46BcTQ2GIK8D-c';
+    // ===========================================================
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { useState, useEffect } = React;
 
     const Icon = ({ children, className = "w-4 h-4" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
@@ -48,12 +57,120 @@
     const Activity = ({ className }) => (<Icon className={className}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></Icon>);
     const RefreshCw = ({ className }) => (<Icon className={className}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></Icon>);
     const School = ({ className }) => (<Icon className={className}><path d="M14 22v-4a2 2 0 1 0-4 0v4" /><path d="m18 10 4 2v10" /><path d="M18 5v17" /><path d="m4 6 8-4 8 4" /><path d="M6 5v17" /><circle cx="12" cy="9" r="2" /></Icon>);
+    const LogOut = ({ className }) => (<Icon className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></Icon>);
 
     // ===========================================================
-    // 퀴즈 모달 - 부모와 완전히 독립된 컴포넌트
-    // 자기 상태만 관리하고, 결과만 부모에게 알려줌
+    // 로그인 화면
     // ===========================================================
-    function QuizModal({ lesson, onClose, onComplete }) {
+    function LoginScreen({ onLogin }) {
+      const [grade, setGrade] = useState(3);
+      const [classNum, setClassNum] = useState(1);
+      const [studentNum, setStudentNum] = useState(1);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+
+      const handleLogin = async () => {
+        setLoading(true);
+        setError('');
+        const studentId = `${grade}-${classNum}-${studentNum}`;
+        try {
+          // 학생이 처음이면 등록, 이미 있으면 그대로
+          const { data: existing } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', studentId)
+            .maybeSingle();
+
+          if (!existing) {
+            const { error: insertError } = await supabase
+              .from('students')
+              .insert({ id: studentId, grade, class_num: classNum, student_num: studentNum });
+            if (insertError) throw insertError;
+          }
+
+          onLogin(studentId);
+        } catch (err) {
+          setError('연결에 실패했어요. 인터넷을 확인해주세요.');
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-8 slide-up">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 mb-3">
+                <School className="w-5 h-5 text-slate-700" />
+                <p className="text-xs font-semibold tracking-[0.2em] text-slate-500">N-PROTOCOL</p>
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">시작하기</h1>
+              <p className="text-sm text-slate-500">학년, 반, 번호를 선택해주세요</p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">학년</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[3, 4, 5, 6].map(g => (
+                    <button key={g} onClick={() => setGrade(g)} className={`py-3 rounded-xl font-bold transition-all ${grade === g ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                      {g}학년
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">반</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setClassNum(Math.max(1, classNum - 1))} className="w-12 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><Minus className="w-5 h-5" /></button>
+                  <div className="flex-1 text-center bg-slate-50 rounded-xl py-3">
+                    <span className="text-2xl font-bold text-slate-900">{classNum}</span>
+                    <span className="text-sm text-slate-500 ml-1">반</span>
+                  </div>
+                  <button onClick={() => setClassNum(Math.min(20, classNum + 1))} className="w-12 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><Plus className="w-5 h-5" /></button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">번호</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setStudentNum(Math.max(1, studentNum - 1))} className="w-12 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><Minus className="w-5 h-5" /></button>
+                  <div className="flex-1 text-center bg-slate-50 rounded-xl py-3">
+                    <span className="text-2xl font-bold text-slate-900">{studentNum}</span>
+                    <span className="text-sm text-slate-500 ml-1">번</span>
+                  </div>
+                  <button onClick={() => setStudentNum(Math.min(40, studentNum + 1))} className="w-12 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><Plus className="w-5 h-5" /></button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-5 text-center">
+              <p className="text-xs text-emerald-700">선택한 정보</p>
+              <p className="text-lg font-bold text-emerald-900">{grade}학년 {classNum}반 {studentNum}번</p>
+            </div>
+
+            {error && <p className="text-xs text-red-600 text-center mb-3">{error}</p>}
+
+            <button onClick={handleLogin} disabled={loading} className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-bold py-4 rounded-xl transition-colors">
+              {loading ? '연결 중...' : '시작하기'}
+            </button>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 text-center">
+              <button onClick={() => onLogin('TEACHER')} className="text-xs text-slate-400 hover:text-slate-700 transition-colors">
+                선생님으로 입장하기 →
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================================================
+    // 퀴즈 모달
+    // ===========================================================
+    function QuizModal({ lesson, studentId, onClose, onComplete }) {
       const [currentQ, setCurrentQ] = useState(0);
       const [selected, setSelected] = useState(null);
       const [results, setResults] = useState([]);
@@ -62,11 +179,21 @@
       if (!lesson || !lesson.quiz || lesson.quiz.length === 0) return null;
       const totalQ = lesson.quiz.length;
 
-      const handleAnswer = () => {
+      const handleAnswer = async () => {
         if (selected === null) return;
         const q = lesson.quiz[currentQ];
         const isCorrect = selected === q.answer;
         const newResults = [...results, isCorrect];
+
+        // 퀴즈 결과를 Supabase에 저장
+        try {
+          await supabase.from('quiz_results').insert({
+            student_id: studentId,
+            lesson_id: lesson.id,
+            question_idx: currentQ,
+            is_correct: isCorrect
+          });
+        } catch (err) { console.error('퀴즈 결과 저장 실패:', err); }
 
         if (currentQ + 1 < totalQ) {
           setResults(newResults);
@@ -86,7 +213,6 @@
       };
 
       const handleClose = () => {
-        // 닫힐 때 결과를 부모에게 알림
         if (showResult) {
           const correctCount = results.filter(r => r).length;
           const passed = correctCount === totalQ;
@@ -95,7 +221,6 @@
         onClose();
       };
 
-      // 결과 화면
       if (showResult) {
         const correctCount = results.filter(r => r).length;
         const passed = correctCount === totalQ;
@@ -104,23 +229,15 @@
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl max-w-md w-full p-6 slide-up max-h-[90vh] overflow-y-auto">
               <div className="text-center mb-5">
-                {passed ? (
-                  <>
-                    <div className="w-16 h-16 bg-emerald-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                      <Trophy className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-1">완벽해요!</h3>
-                    <p className="text-sm text-slate-600">{totalQ}문제 모두 맞혔어요. 다음 차시로 가도 좋아요</p>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 bg-amber-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                      <RefreshCw className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-1">조금 더 익혀볼까요?</h3>
-                    <p className="text-sm text-slate-600">{totalQ}문제 중 {correctCount}문제 맞혔어요</p>
-                  </>
-                )}
+                {passed ? (<>
+                  <div className="w-16 h-16 bg-emerald-500 rounded-full mx-auto mb-3 flex items-center justify-center"><Trophy className="w-8 h-8 text-white" /></div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1">완벽해요!</h3>
+                  <p className="text-sm text-slate-600">{totalQ}문제 모두 맞혔어요. 다음 차시로 가도 좋아요</p>
+                </>) : (<>
+                  <div className="w-16 h-16 bg-amber-500 rounded-full mx-auto mb-3 flex items-center justify-center"><RefreshCw className="w-8 h-8 text-white" /></div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1">조금 더 익혀볼까요?</h3>
+                  <p className="text-sm text-slate-600">{totalQ}문제 중 {correctCount}문제 맞혔어요</p>
+                </>)}
               </div>
               <div className="space-y-2 mb-5">
                 {lesson.quiz.map((q, idx) => (
@@ -144,34 +261,22 @@
         );
       }
 
-      // 문제 화면
       const q = lesson.quiz[currentQ];
       return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 slide-up">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-blue-600" />
-                <h3 className="font-bold text-slate-900">자기 점검 퀴즈</h3>
-              </div>
-              <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
-                <X className="w-4 h-4 text-slate-600" />
-              </button>
+              <div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-blue-600" /><h3 className="font-bold text-slate-900">자기 점검 퀴즈</h3></div>
+              <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><X className="w-4 h-4 text-slate-600" /></button>
             </div>
-            <div className="flex items-center gap-1.5 mb-5">
-              {lesson.quiz.map((_, idx) => (
-                <div key={idx} className={`h-1.5 flex-1 rounded-full ${idx < currentQ ? 'bg-emerald-500' : idx === currentQ ? 'bg-blue-500' : 'bg-slate-200'}`} />
-              ))}
-            </div>
+            <div className="flex items-center gap-1.5 mb-5">{lesson.quiz.map((_, idx) => (<div key={idx} className={`h-1.5 flex-1 rounded-full ${idx < currentQ ? 'bg-emerald-500' : idx === currentQ ? 'bg-blue-500' : 'bg-slate-200'}`} />))}</div>
             <p className="text-xs font-semibold text-slate-500 mb-1">문제 {currentQ + 1} / {totalQ}</p>
             <p className="text-base font-medium text-slate-900 mb-5 leading-relaxed">{q.q}</p>
             <div className="space-y-2 mb-5">
               {q.options.map((opt, idx) => (
                 <button key={idx} onClick={() => setSelected(idx)} className={`w-full text-left p-3 rounded-lg border-2 transition-all ${selected === idx ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-400'}`}>
                   <div className="flex items-center gap-3">
-                    <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selected === idx ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}>
-                      {selected === idx && <div className="w-2 h-2 bg-white rounded-full" />}
-                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selected === idx ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}>{selected === idx && <div className="w-2 h-2 bg-white rounded-full" />}</div>
                     <span className="text-sm font-medium text-slate-800">{opt}</span>
                   </div>
                 </button>
@@ -189,31 +294,51 @@
     // 메인 앱
     // ===========================================================
     function NProtocol() {
+      const [studentId, setStudentId] = useState(null);  // 로그인된 학생 ID
       const [mode, setMode] = useState('student');
       const [view, setView] = useState('home');
       const [currentLesson, setCurrentLesson] = useState(null);
       const [showCallModal, setShowCallModal] = useState(false);
       const [callStatus, setCallStatus] = useState(null);
       const [showQuiz, setShowQuiz] = useState(false);
-      
-      const [progress, setProgress] = useState(() => {
-        try {
-          const saved = localStorage.getItem('nprotocol_progress');
-          return saved ? JSON.parse(saved) : {};
-        } catch { return {}; }
-      });
+      const [progress, setProgress] = useState({});
+      const [calls, setCalls] = useState([]);
 
-      const [calls, setCalls] = useState([
-        { id: 1, student: '김민준', studentId: 'S01', type: { id: 'concept', icon: '🤔', label: '개념이 이해가 안 돼요' }, location: '6차시 - 대분수와 가분수를 바꾸어 나타내요', time: '14:23', status: 'pending' },
-        { id: 2, student: '이서연', studentId: 'S02', type: { id: 'tool', icon: '🛠', label: '도구 사용법을 모르겠어요' }, location: '4차시 - 여러 가지 분수를 알아봐요 (1)', time: '14:18', status: 'resolved' },
-        { id: 3, student: '박지호', studentId: 'S03', type: { id: 'reading', icon: '📖', label: '설명을 읽어도 모르겠어요' }, location: '2차시 - 전체의 분수만큼은 얼마인지 알아봐요', time: '14:15', status: 'resolved' },
-        { id: 4, student: '최예린', studentId: 'S04', type: { id: 'concept', icon: '🤔', label: '개념이 이해가 안 돼요' }, location: '6차시 - 대분수와 가분수를 바꾸어 나타내요', time: '14:12', status: 'resolved' },
-        { id: 5, student: '정시우', studentId: 'S05', type: { id: 'direct', icon: '✋', label: '선생님께 직접 물어보고 싶어요' }, location: '7차시 - 분수의 크기를 비교해요', time: '14:08', status: 'resolved' },
-      ]);
-
+      // 학생 진도 불러오기
       useEffect(() => {
-        try { localStorage.setItem('nprotocol_progress', JSON.stringify(progress)); } catch {}
-      }, [progress]);
+        if (!studentId || studentId === 'TEACHER') return;
+        const loadProgress = async () => {
+          const { data } = await supabase.from('progress').select('*').eq('student_id', studentId);
+          if (data) {
+            const map = {};
+            data.forEach(row => {
+              map[row.lesson_id] = { visited: row.visited, quizPassed: row.quiz_passed };
+            });
+            setProgress(map);
+          }
+        };
+        loadProgress();
+      }, [studentId]);
+
+      // 호출 데이터 불러오기 + 실시간 구독 (교사 모드)
+      useEffect(() => {
+        if (studentId !== 'TEACHER' && mode !== 'teacher') return;
+        const loadCalls = async () => {
+          const { data } = await supabase.from('calls').select('*').order('created_at', { ascending: false }).limit(50);
+          if (data) setCalls(data);
+        };
+        loadCalls();
+
+        // 실시간 구독
+        const channel = supabase
+          .channel('calls-changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, () => {
+            loadCalls();
+          })
+          .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+      }, [studentId, mode]);
 
       const prerequisiteData = {
         title: "분수 단원을 시작하기 전에",
@@ -280,25 +405,69 @@
         return 'not-started';
       };
 
-      const markVisited = (lessonId) => {
-        setProgress(prev => ({ ...prev, [lessonId]: { ...prev[lessonId], visited: true } }));
+      // 차시 방문 기록 - Supabase에 저장
+      const markVisited = async (lessonId) => {
+        const newProgress = { ...progress[lessonId], visited: true };
+        setProgress(prev => ({ ...prev, [lessonId]: newProgress }));
+        try {
+          await supabase.from('progress').upsert({
+            student_id: studentId,
+            lesson_id: lessonId,
+            visited: true,
+            quiz_passed: progress[lessonId]?.quizPassed || false,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'student_id,lesson_id' });
+        } catch (err) { console.error('진도 저장 실패:', err); }
       };
 
-      // 퀴즈 완료 콜백 - 모달이 닫힐 때 한 번만 호출됨
-      const handleQuizComplete = (lessonId, passed) => {
+      // 퀴즈 완료 콜백 - Supabase에 저장
+      const handleQuizComplete = async (lessonId, passed) => {
         if (passed) {
           setProgress(prev => ({ ...prev, [lessonId]: { ...prev[lessonId], visited: true, quizPassed: true } }));
+          try {
+            await supabase.from('progress').upsert({
+              student_id: studentId,
+              lesson_id: lessonId,
+              visited: true,
+              quiz_passed: true,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'student_id,lesson_id' });
+          } catch (err) { console.error('퀴즈 통과 저장 실패:', err); }
         }
       };
 
-      const handleCall = (typeId) => {
+      // 호출 - Supabase에 저장
+      const handleCall = async (typeId) => {
         const type = callTypes.find(t => t.id === typeId);
         const location = currentLesson ? `${currentLesson.number} - ${currentLesson.title}` : '단원 시작 전';
         const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        const newCall = { id: Date.now(), student: '나', studentId: 'ME', type, location, time, status: 'pending' };
-        setCalls(prev => [newCall, ...prev]);
+        try {
+          await supabase.from('calls').insert({
+            student_id: studentId,
+            lesson_id: currentLesson?.id || null,
+            lesson_title: location,
+            call_type: typeId,
+            status: 'pending'
+          });
+        } catch (err) { console.error('호출 저장 실패:', err); }
         setCallStatus({ type, location, time });
         setTimeout(() => { setCallStatus(null); setShowCallModal(false); }, 5000);
+      };
+
+      // 호출 처리완료 (교사용)
+      const resolveCall = async (callId) => {
+        try {
+          await supabase.from('calls').update({ status: 'resolved' }).eq('id', callId);
+        } catch (err) { console.error('호출 처리 실패:', err); }
+      };
+
+      // 로그아웃
+      const handleLogout = () => {
+        setStudentId(null);
+        setProgress({});
+        setView('home');
+        setCurrentLesson(null);
+        setMode('student');
       };
 
       const completedCount = lessons.filter(l => getLessonStatus(l.id) === 'completed').length;
@@ -569,7 +738,7 @@
         }
       };
 
-      // ===== 호출 모달 =====
+      // 호출 모달
       const renderCallModal = () => {
         if (!showCallModal) return null;
         if (callStatus) {
@@ -621,7 +790,6 @@
         return (<button onClick={() => setShowCallModal(true)} className="fixed bottom-6 right-6 w-14 h-14 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg shadow-red-200 flex items-center justify-center z-40 transition-all hover:scale-105"><HelpCircle className="w-7 h-7" /></button>);
       };
 
-      // ===== 화면들 =====
       const renderHome = () => (
         <div className="space-y-8">
           <div>
@@ -794,26 +962,25 @@
       const renderTeacherDashboard = () => {
         const pendingCalls = calls.filter(c => c.status === 'pending');
         const callsByLesson = {};
-        calls.forEach(c => { const key = c.location; callsByLesson[key] = (callsByLesson[key] || 0) + 1; });
+        calls.forEach(c => { const key = c.lesson_title || '단원 시작 전'; callsByLesson[key] = (callsByLesson[key] || 0) + 1; });
         const sortedLessons = Object.entries(callsByLesson).sort((a, b) => b[1] - a[1]);
         const callsByType = {};
-        calls.forEach(c => { callsByType[c.type.id] = (callsByType[c.type.id] || 0) + 1; });
+        calls.forEach(c => { callsByType[c.call_type] = (callsByType[c.call_type] || 0) + 1; });
 
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-[0.2em] text-slate-500 mb-1">N-PROTOCOL · 교사 대시보드</p>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">3학년 1반 분수 단원</h1>
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">실시간 학습 모니터링</h1>
                 <p className="text-sm text-slate-500 mt-1">{new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white border border-slate-200 rounded-xl p-4"><div className="flex items-center gap-2 mb-2"><Users className="w-4 h-4 text-slate-500" /><p className="text-xs font-semibold text-slate-500">학급 학생</p></div><p className="text-2xl font-bold text-slate-900">25명</p></div>
-              <div className="bg-white border border-slate-200 rounded-xl p-4"><div className="flex items-center gap-2 mb-2"><Activity className="w-4 h-4 text-emerald-500" /><p className="text-xs font-semibold text-slate-500">평균 진도</p></div><p className="text-2xl font-bold text-emerald-600">62%</p></div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="bg-white border border-slate-200 rounded-xl p-4"><div className="flex items-center gap-2 mb-2"><Bell className="w-4 h-4 text-red-500" /><p className="text-xs font-semibold text-slate-500">대기 호출</p></div><p className="text-2xl font-bold text-red-600">{pendingCalls.length}건</p></div>
               <div className="bg-white border border-slate-200 rounded-xl p-4"><div className="flex items-center gap-2 mb-2"><Trophy className="w-4 h-4 text-blue-500" /><p className="text-xs font-semibold text-slate-500">총 호출</p></div><p className="text-2xl font-bold text-blue-600">{calls.length}건</p></div>
+              <div className="bg-white border border-slate-200 rounded-xl p-4"><div className="flex items-center gap-2 mb-2"><Activity className="w-4 h-4 text-emerald-500" /><p className="text-xs font-semibold text-slate-500">처리 완료</p></div><p className="text-2xl font-bold text-emerald-600">{calls.length - pendingCalls.length}건</p></div>
             </div>
 
             <div className="bg-white border-2 border-red-200 rounded-2xl p-6">
@@ -825,19 +992,23 @@
                 <p className="text-center text-sm text-slate-500 py-8">현재 대기 중인 호출이 없어요</p>
               ) : (
                 <div className="space-y-2">
-                  {pendingCalls.map((call) => (
-                    <div key={call.id} className="bg-red-50 border border-red-200 rounded-xl p-4 fade-in">
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl flex-shrink-0">{call.type.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap"><h4 className="font-bold text-slate-900">{call.student}</h4><span className="text-xs text-slate-500">{call.time}</span></div>
-                          <p className="text-sm font-medium text-red-700 mb-1">{call.type.label}</p>
-                          <p className="text-xs text-slate-600">📍 {call.location}</p>
+                  {pendingCalls.map((call) => {
+                    const type = callTypes.find(t => t.id === call.call_type) || { icon: '❓', label: call.call_type };
+                    const time = new Date(call.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                    return (
+                      <div key={call.id} className="bg-red-50 border border-red-200 rounded-xl p-4 fade-in">
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl flex-shrink-0">{type.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap"><h4 className="font-bold text-slate-900">{call.student_id}</h4><span className="text-xs text-slate-500">{time}</span></div>
+                            <p className="text-sm font-medium text-red-700 mb-1">{type.label}</p>
+                            <p className="text-xs text-slate-600">📍 {call.lesson_title || '단원 시작 전'}</p>
+                          </div>
+                          <button onClick={() => resolveCall(call.id)} className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0">처리완료</button>
                         </div>
-                        <button onClick={() => setCalls(prev => prev.map(c => c.id === call.id ? { ...c, status: 'resolved' } : c))} className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0">처리완료</button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -846,18 +1017,22 @@
               <div className="bg-white border border-slate-200 rounded-2xl p-6">
                 <h3 className="font-bold text-slate-900 mb-1 text-sm">차시별 호출 빈도</h3>
                 <p className="text-xs text-slate-500 mb-4">학생들이 가장 많이 막힌 차시 순서</p>
-                <div className="space-y-2">
-                  {sortedLessons.slice(0, 5).map(([location, count], idx) => {
-                    const maxCount = sortedLessons[0][1];
-                    const percent = (count / maxCount) * 100;
-                    return (
-                      <div key={idx}>
-                        <div className="flex items-center justify-between mb-1"><p className="text-xs font-medium text-slate-700 truncate flex-1 mr-2">{location}</p><span className="text-xs font-bold text-slate-900 flex-shrink-0">{count}건</span></div>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${idx === 0 ? 'bg-red-500' : idx === 1 ? 'bg-orange-500' : 'bg-slate-400'}`} style={{ width: `${percent}%` }} /></div>
-                      </div>
-                    );
-                  })}
-                </div>
+                {sortedLessons.length === 0 ? (
+                  <p className="text-center text-sm text-slate-500 py-8">아직 호출 데이터가 없어요</p>
+                ) : (
+                  <div className="space-y-2">
+                    {sortedLessons.slice(0, 5).map(([location, count], idx) => {
+                      const maxCount = sortedLessons[0][1];
+                      const percent = (count / maxCount) * 100;
+                      return (
+                        <div key={idx}>
+                          <div className="flex items-center justify-between mb-1"><p className="text-xs font-medium text-slate-700 truncate flex-1 mr-2">{location}</p><span className="text-xs font-bold text-slate-900 flex-shrink-0">{count}건</span></div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${idx === 0 ? 'bg-red-500' : idx === 1 ? 'bg-orange-500' : 'bg-slate-400'}`} style={{ width: `${percent}%` }} /></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div className="bg-white border border-slate-200 rounded-2xl p-6">
@@ -881,53 +1056,72 @@
             <div className="bg-white border border-slate-200 rounded-2xl p-6">
               <h3 className="font-bold text-slate-900 mb-1 text-sm">최근 호출 이력</h3>
               <p className="text-xs text-slate-500 mb-4">처리된 호출 포함 전체 기록</p>
-              <div className="space-y-2">
-                {calls.slice(0, 8).map((call) => (
-                  <div key={call.id} className={`flex items-center gap-3 p-3 rounded-lg border ${call.status === 'pending' ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
-                    <span className="text-lg flex-shrink-0">{call.type.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5"><p className="font-semibold text-sm text-slate-900">{call.student}</p><span className="text-xs text-slate-400">·</span><span className="text-xs text-slate-500">{call.time}</span>{call.status === 'pending' ? <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">대기</span> : <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">처리완료</span>}</div>
-                      <p className="text-xs text-slate-600 truncate">{call.type.label} · {call.location}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-              <p className="text-xs text-amber-800 leading-relaxed"><span className="font-semibold">시연 안내:</span> 이 대시보드는 실제 백엔드 구축 후 작동할 화면의 시연 버전입니다. 학생용 N-Protocol에서 호출 버튼을 누르면 실시간으로 이 화면 상단에 알림이 추가됩니다.</p>
+              {calls.length === 0 ? (
+                <p className="text-center text-sm text-slate-500 py-8">아직 호출 이력이 없어요</p>
+              ) : (
+                <div className="space-y-2">
+                  {calls.slice(0, 10).map((call) => {
+                    const type = callTypes.find(t => t.id === call.call_type) || { icon: '❓', label: call.call_type };
+                    const time = new Date(call.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                    return (
+                      <div key={call.id} className={`flex items-center gap-3 p-3 rounded-lg border ${call.status === 'pending' ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
+                        <span className="text-lg flex-shrink-0">{type.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5"><p className="font-semibold text-sm text-slate-900">{call.student_id}</p><span className="text-xs text-slate-400">·</span><span className="text-xs text-slate-500">{time}</span>{call.status === 'pending' ? <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">대기</span> : <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">처리완료</span>}</div>
+                          <p className="text-xs text-slate-600 truncate">{type.label} · {call.lesson_title || '단원 시작 전'}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         );
       };
 
+      // 로그인 안 됐으면 로그인 화면
+      if (!studentId) {
+        return <LoginScreen onLogin={setStudentId} />;
+      }
+
+      // 교사 모드
+      if (studentId === 'TEACHER') {
+        return (
+          <div className="min-h-screen bg-slate-50">
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+              <div className="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2"><School className="w-5 h-5 text-slate-700" /><span className="text-sm font-bold text-slate-900">능동초 N-Protocol · 교사용</span></div>
+                <button onClick={handleLogout} className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 transition-colors"><LogOut className="w-3.5 h-3.5" />로그아웃</button>
+              </div>
+            </div>
+            <div className="max-w-6xl mx-auto px-5 py-8">{renderTeacherDashboard()}</div>
+          </div>
+        );
+      }
+
+      // 학생 모드
       return (
         <div className="min-h-screen bg-slate-50">
           <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
             <div className="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2"><School className="w-5 h-5 text-slate-700" /><span className="text-sm font-bold text-slate-900">능동초 N-Protocol</span></div>
-              <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-                <button onClick={() => setMode('student')} className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${mode === 'student' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>학생용</button>
-                <button onClick={() => setMode('teacher')} className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${mode === 'teacher' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>교사용</button>
-              </div>
+              <div className="flex items-center gap-2"><School className="w-5 h-5 text-slate-700" /><span className="text-sm font-bold text-slate-900">N-Protocol</span><span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">{studentId}</span></div>
+              <button onClick={handleLogout} className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 transition-colors"><LogOut className="w-3.5 h-3.5" />로그아웃</button>
             </div>
           </div>
 
-          {mode === 'student' ? (
-            <div className="max-w-2xl mx-auto px-5 py-8 sm:py-10 pb-32">
-              {view === 'home' && renderHome()}
-              {view === 'prerequisite' && renderPrerequisite()}
-              {view === 'lesson' && renderLesson()}
-            </div>
-          ) : (
-            <div className="max-w-6xl mx-auto px-5 py-8">{renderTeacherDashboard()}</div>
-          )}
+          <div className="max-w-2xl mx-auto px-5 py-8 sm:py-10 pb-32">
+            {view === 'home' && renderHome()}
+            {view === 'prerequisite' && renderPrerequisite()}
+            {view === 'lesson' && renderLesson()}
+          </div>
 
-          {mode === 'student' && renderCallButton()}
-          {mode === 'student' && renderCallModal()}
-          {mode === 'student' && showQuiz && currentLesson && (
+          {renderCallButton()}
+          {renderCallModal()}
+          {showQuiz && currentLesson && (
             <QuizModal 
               lesson={currentLesson} 
+              studentId={studentId}
               onClose={() => setShowQuiz(false)}
               onComplete={handleQuizComplete}
             />
